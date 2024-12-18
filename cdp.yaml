@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cdp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cdp
+  template:
+    metadata:
+      labels:
+        app: cdp
+    spec:
+      containers:
+      - name: cdp
+        image: almer8/cdp
+        imagePullPolicy: Always
+        volumeMounts:
+          - name: metadata-volume
+            mountPath: /db
+        ports:
+        - containerPort: 8081
+        env:
+          - name: RABBITMQ_HOST
+            value: rabbitmq.default.svc.cluster.local
+          - name: RABBITMQ_USERNAME
+            value: rabbitmq
+          - name: RABBITMQ_PASSWORD
+            value: rabbitmq
+          - name: SERVER_PORT
+            value: '8081'
+          - name: SQLITE_URL
+            value: jdbc:sqlite:/db/metadata.db
+      volumes:
+        - name: metadata-volume
+          persistentVolumeClaim:
+            claimName: metadata-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cdp
+spec:
+  selector:
+    app: cdp
+  ports:
+  - protocol: TCP
+    port: 8081
+    targetPort: 8081

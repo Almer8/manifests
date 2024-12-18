@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: task-manager
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: task-manager
+  template:
+    metadata:
+      labels:
+        app: task-manager
+    spec:
+      containers:
+      - name: task-manager
+        image: almer8/task_manager
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8082
+        resources:
+          limits:
+            cpu: "1"
+          requests:
+            cpu: "0.5"
+        env:
+          - name: DATASOURCE_URL
+            value: jdbc:postgresql://taskpostgres:5432/task
+          - name: DATASOURCE_USERNAME
+            value: postgres
+          - name: DATASOURCE_PASSWORD
+            value: postgres
+          - name: RABBITMQ_HOST
+            value: rabbitmq.default.svc.cluster.local
+          - name: RABBITMQ_USERNAME
+            value: rabbitmq
+          - name: RABBITMQ_PASSWORD
+            value: rabbitmq
+          - name: SERVER_PORT
+            value: '8082'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: task-manager
+spec:
+  selector:
+    app: task-manager
+  ports:
+  - protocol: TCP
+    port: 8082
+    targetPort: 8082
+  clusterIP: None
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: task-manager
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: task-manager
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70

@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metadatalistenerconfig
+data:
+  RABBITMQ_HOST: 'rabbitmq.default.svc.cluster.local'
+  RABBITMQ_USERNAME: 'rabbitmq'
+  RABBITMQ_PASSWORD: 'rabbitmq'
+  POSTGRES_URL: 'jdbc:postgresql://metadatapostgres.default.svc.cluster.local:5432/metadata'
+  QUEUE_NAME: 'metadata_changes'
+  PG_LISTEN_CHANNEL: 'data_changes'
+  METRICS_PORT: "8087"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metadatalistener
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metadatalistener
+  template:
+    metadata:
+      labels:
+        app: metadatalistener
+    spec:
+      containers:
+        - name: metadatalistener
+          image: almer8/postgreslistener
+          envFrom:
+            - configMapRef:
+                name: metadatalistenerconfig
+          ports:
+            - containerPort: 8087
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metadatalistener
+spec:
+  selector:
+    app: metadatalistener
+  ports:
+    - protocol: TCP
+      port: 8087
+      targetPort: 8087
+  clusterIP: None
+---

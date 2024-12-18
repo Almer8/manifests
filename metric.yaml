@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metric
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metric
+  template:
+    metadata:
+      labels:
+        app: metric
+    spec:
+      containers:
+      - name: metric
+        image: almer8/metric
+        imagePullPolicy: Always
+        volumeMounts:
+          - name: taskmigration-volume
+            mountPath: /db/task
+          - name: metadata-volume
+            mountPath: /db/metadata
+        ports:
+        - containerPort: 8084
+        env:
+          - name: METADATA_SQLITE_URL
+            value: jdbc:sqlite:/db/metadata/metadata.db
+          - name: TASKS_SQLITE_URL
+            value: jdbc:sqlite:/db/task/task.db
+      volumes:
+        - name: taskmigration-volume
+          persistentVolumeClaim:
+            claimName: taskmigration-pvc
+        - name: metadata-volume
+          persistentVolumeClaim:
+            claimName: metadata-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metric
+spec:
+  selector:
+    app: metric
+  ports:
+  - protocol: TCP
+    port: 8084
+    targetPort: 8084
+  clusterIP: None

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metadatapostgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metadatapostgres
+  template:
+    metadata:
+      labels:
+        app: metadatapostgres
+    spec:
+      containers:
+      - name: postgres
+        image: almer8/metadatapostgres
+        imagePullPolicy: Always
+        env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "postgres"
+        ports:
+        - containerPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metadatapostgres
+spec:
+  selector:
+    app: metadatapostgres
+  ports:
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432
+  clusterIP: None

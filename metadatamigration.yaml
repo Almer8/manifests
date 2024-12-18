@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metadata-sqlite-config
+data:
+  QUEUE_NAME: 'metadata_changes'
+  RABBITMQ_HOST: 'rabbitmq.default.svc.cluster.local'
+  RABBITMQ_USERNAME: 'rabbitmq'
+  RABBITMQ_PASSWORD: 'rabbitmq'
+  SQLITE_URLS: '["/db/metadata.db"]'
+  METRICS_PORT: "8089"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metadatamigration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metadatamigration
+  template:
+    metadata:
+      labels:
+        app: metadatamigration
+    spec:
+      containers:
+        - name: metadatamigration
+          image: almer8/metadatamigration
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: metadata-sqlite-config
+          volumeMounts:
+            - name: metadata-volume
+              mountPath: /db
+          ports:
+            - containerPort: 8088
+      volumes:
+        - name: metadata-volume
+          persistentVolumeClaim:
+            claimName: metadata-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metadatamigration
+spec:
+  selector:
+    app: metadatamigration
+  ports:
+    - protocol: TCP
+      port: 8089
+      targetPort: 8089
+  clusterIP: None
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: metadata-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /home/almerlinux/Microservices/db
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: metadata-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi

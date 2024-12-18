@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-manager
+  template:
+    metadata:
+      labels:
+        app: user-manager
+    spec:
+      containers:
+      - name: user-manager
+        image: almer8/user_service
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8083
+        env:
+          - name: DATASOURCE_URL
+            value: jdbc:postgresql://userpostgres:5432/user
+          - name: DATASOURCE_USERNAME
+            value: postgres
+          - name: DATASOURCE_PASSWORD
+            value: postgres
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-manager
+spec:
+  selector:
+    app: user-manager
+  ports:
+  - protocol: TCP
+    port: 8083
+    targetPort: 8083
+  clusterIP: None

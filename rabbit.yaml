@@ -1,0 +1,20 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbitmq
+spec:
+  secretBackend:
+    externalSecret:
+      name: "my-secret"
+
+
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: my-secret
+data:
+  default_user.conf: ZGVmYXVsdF91c2VyID0gcmFiYml0bXEKZGVmYXVsdF9wYXNzID0gcmFiYml0bXE=
+  password: cmFiYml0bXE=
+  username: cmFiYml0bXE=
+type: Opaque

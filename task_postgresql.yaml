@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskpostgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: taskpostgres
+  template:
+    metadata:
+      labels:
+        app: taskpostgres
+    spec:
+      containers:
+      - name: postgres
+        image: almer8/taskpostgres
+        imagePullPolicy: Always
+        env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "postgres"
+        ports:
+        - containerPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: taskpostgres
+spec:
+  selector:
+    app: taskpostgres
+  ports:
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432
+  clusterIP: None

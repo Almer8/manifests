@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metadata
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metadata
+  template:
+    metadata:
+      labels:
+        app: metadata
+    spec:
+      containers:
+      - name: metadata
+        image: almer8/metadata
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+          - name: DATASOURCE_URL
+            value: jdbc:postgresql://metadatapostgres:5432/metadata
+          - name: DATASOURCE_USERNAME
+            value: postgres
+          - name: DATASOURCE_PASSWORD
+            value: postgres
+          - name: USER_URL
+            value: http://user-manager.default.svc.cluster.local:8083
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metadata
+spec:
+  selector:
+    app: metadata
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  clusterIP: None
